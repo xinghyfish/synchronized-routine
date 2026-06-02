@@ -24,6 +24,89 @@ JSON 对象必须符合这个结构：
 - confidence 只能是 high、medium、low 之一。
 - 如果信息不足，也必须输出合法 JSON，并在 answer 中说明缺少什么信息。
 """.strip()
+ROME_SYSTEM_PROMPT = """
+你是我的罗马帝国历史学习帮手。
+你擅长解释罗马王政、共和国、帝国、西罗马衰亡、东罗马延续等历史主题。
+
+回答要求：
+1. 使用中文。
+2. 优先按时间线解释。
+3. 涉及人物、战争、制度时，要说明背景、原因、影响。
+4. 不确定的史实要明确说“不确定”或“史学界有争议”。
+5. 不要把影视、游戏或小说设定当成真实历史。
+6. 回答要适合历史初学者，但不要过度简化。
+""".strip()
+ROME_FEW_SHOT = """
+示例 1：
+用户问题：凯撒为什么重要？
+
+正确回答：
+凯撒重要，不只是因为他是著名将军，而是因为他推动了罗马从共和国走向帝国的关键转折。
+
+1. 时代背景
+凯撒生活在罗马共和国晚期。当时元老院贵族、平民派政治家、军队将领之间的冲突越来越激烈。
+
+2. 主要行动
+他征服高卢，获得巨大军事声望和财富；随后与庞培发生内战，并成为罗马事实上的最高权力者。
+
+3. 历史影响
+他的独裁加速了共和国制度崩溃。他被刺杀后，罗马并没有恢复共和国，反而进入新一轮内战，最终由屋大维建立元首制。
+
+4. 常见误区
+凯撒不是罗马帝国第一位皇帝。通常认为第一位皇帝是奥古斯都，也就是屋大维。
+
+5. 下一步建议
+可以继续学习：格拉古兄弟改革、马略军事改革、苏拉独裁、凯撒与庞培内战。
+
+示例 2：
+用户问题：为什么西罗马帝国会灭亡？
+
+正确回答：
+西罗马帝国灭亡不是单一事件造成的，而是长期结构性问题叠加的结果。
+
+1. 时间线
+395 年，罗马帝国正式分为东西两部分。
+410 年，西哥特人洗劫罗马。
+455 年，汪达尔人洗劫罗马。
+476 年，西罗马末代皇帝罗慕路斯·奥古斯都被废黜，通常被视为西罗马帝国灭亡。
+
+2. 主要原因
+财政困难削弱了军队和行政系统。
+军队越来越依赖蛮族将领和雇佣兵。
+皇位更替频繁，中央权威下降。
+西部城市经济和税收基础逐渐衰弱。
+外部民族迁徙和军事压力不断增加。
+
+3. 需要避免的误解
+不能简单说“蛮族入侵导致罗马灭亡”。外部入侵很重要，但内部财政、军事和政治结构问题同样关键。
+
+4. 历史影响
+西罗马灭亡后，西欧逐渐进入日耳曼王国时代；而东罗马帝国，也就是拜占庭帝国，仍然延续近千年。
+
+5. 下一步建议
+可以继续学习：戴克里先改革、君士坦丁改革、哥特战争、阿提拉与匈人、西罗马与东罗马差异。
+
+示例 3：
+用户问题：尼禄是不是亲手烧毁了整个罗马？
+
+正确回答：
+这个说法需要谨慎。尼禄是否亲自纵火烧毁罗马，并没有可靠证据可以直接证明。
+
+1. 史实背景
+公元 64 年，罗马发生大火，城市遭到严重破坏。后世很多叙述把责任归咎于尼禄。
+
+2. 争议点
+古代史家如塔西佗记录了尼禄受到怀疑，但也说明证据并不简单。尼禄后来把责任推给基督徒，并对他们进行迫害。
+
+3. 更稳妥的说法
+可以说：尼禄在罗马大火后声誉严重受损，并被许多古代作者指责与火灾有关；但“尼禄亲手烧毁整个罗马”是过度简化甚至戏剧化的说法。
+
+4. 常见误区
+“尼禄边拉琴边看罗马燃烧”这个说法也很可疑，因为当时小提琴还不存在。
+
+5. 下一步建议
+可以继续学习：尼禄统治、罗马大火、塔西佗《编年史》、早期基督徒迫害。
+""".strip()
 SEPARATOR = "-" * 64
 
 
@@ -54,6 +137,21 @@ def parse_json_command(user_input: str) -> tuple[bool, str]:
         return True, user_input.removeprefix("/json ").strip()
 
     return False, user_input
+
+
+def parse_rome_command(user_input: str) -> tuple[bool, str]:
+    if user_input.startswith("/rome "):
+        return True, user_input.removeprefix("/rome ").strip()
+
+    return False, user_input
+
+
+def build_rome_messages(user_input: str) -> List[Dict[str, str]]:
+    return [
+        {"role": "system", "content": ROME_SYSTEM_PROMPT},
+        {"role": "user", "content": ROME_FEW_SHOT},
+        {"role": "user", "content": f"请回答这个罗马历史问题：{user_input}"},
+    ]
 
 
 def pretty_json(text: str) -> str:
@@ -166,6 +264,7 @@ def main():
 
     print("Agent 已启动。输入 exit / quit / q 退出。")
     print("固定 JSON 输出：输入 /json 你的问题")
+    print("罗马历史学习：输入 /rome 你的问题")
     if not prompt_session:
         print("提示：安装 prompt_toolkit 后，中文、emoji、删除键和历史输入体验会更好。")
 
@@ -184,9 +283,15 @@ def main():
             break
 
         json_mode, prompt = parse_json_command(user_input)
+        rome_mode, prompt = parse_rome_command(prompt)
 
         try:
-            if json_mode:
+            if rome_mode:
+                result = agent.learn(
+                    build_rome_messages(prompt),
+                    temperature=0.4,
+                )
+            elif json_mode:
                 json_messages = [
                     {"role": "system", "content": JSON_SYSTEM_PROMPT},
                     {"role": "user", "content": prompt},
