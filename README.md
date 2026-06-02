@@ -4,17 +4,17 @@
 
 ## CLI Agent
 
-`cli-agent/` 是一个中文命令行 AI Agent 学习助手。安装后可以通过 `agent` 命令唤醒：
+`cli-agent/` 是一个中文命令行 AI Agent 学习助手。可以通过 conda 脚本快速创建运行环境：
 
 ```bash
-python3 -m pip install -e ./cli-agent
+./setup_conda_env.sh
+conda activate agent_learn
 export DEEPSEEK_API_KEY="你的_deepseek_key"
-agent
+python cli-agent/learn.py
 ```
 
-也支持单次提问：
+也可以自定义环境名：
 
 ```bash
-agent "请解释什么是 RAG"
-agent --mode compare "RAG 和 Tool Calling"
+./setup_conda_env.sh my_agent_env
 ```
